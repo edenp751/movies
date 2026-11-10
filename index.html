@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Watch</title>
+  <style>
+    * { box-sizing: border-box; }
+    body {
+      margin: 0; background: #0b0b0f; color: #e8e8ea;
+      font-family: system-ui, -apple-system, sans-serif;
+      display: flex; flex-direction: column; align-items: center;
+      min-height: 100vh; padding: 24px 16px;
+    }
+    header { width: 100%; max-width: 1100px; margin-bottom: 18px; }
+    h1 { font-size: 1.15rem; font-weight: 600; margin: 0 0 12px; }
+    .controls { display: flex; flex-wrap: wrap; gap: 8px; }
+    input, button, select {
+      font: inherit; padding: 9px 12px; border-radius: 8px;
+      border: 1px solid #2b2b35; background: #15151c; color: inherit;
+    }
+    input { width: 130px; }
+    button { background: #e50914; border-color: #e50914; color: #fff; cursor: pointer; font-weight: 600; }
+    button:hover { filter: brightness(1.1); }
+    .frame {
+      width: 100%; max-width: 1100px; aspect-ratio: 16 / 9;
+      background: #000; border-radius: 10px; overflow: hidden;
+      box-shadow: 0 8px 30px rgba(0,0,0,.45);
+    }
+    iframe { width: 100%; height: 100%; border: 0; display: block; }
+    .hint { max-width: 1100px; width: 100%; font-size: .8rem; color: #8a8a96; margin-top: 12px; }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>CineSRC player</h1>
+    <div class="controls">
+      <select id="type">
+        <option value="movie">Movie</option>
+        <option value="tv">TV</option>
+      </select>
+      <input id="id" placeholder="TMDB ID" value="1084242" inputmode="numeric">
+      <input id="s" placeholder="Season" value="1" size="3" type="number" min="0" style="width:80px">
+      <input id="e" placeholder="Episode" value="1" size="3" type="number" min="0" style="width:80px">
+      <button id="play">Play</button>
+    </div>
+  </header>
+
+  <div class="frame">
+    <iframe id="player"
+      src="https://cinesrc.st/embed/movie/1084242"
+      allowfullscreen
+      allow="autoplay; fullscreen; picture-in-picture"
+      referrerpolicy="origin"></iframe>
+  </div>
+
+  <p class="hint">TMDB ID = the number in a themoviedb.org title URL, e.g. /movie/<b>1084242</b>-dune-part-two.</p>
+
+  <script>
+    const $ = (id) => document.getElementById(id);
+
+    function build() {
+      const type = $('type').value;
+      const id = $('id').value.trim().replace(/\D/g, '');
+      if (!id) { alert('Enter a TMDB ID'); return; }
+      let url = `https://cinesrc.st/embed/${type}/${id}`;
+      if (type === 'tv') {
+        url += `?s=${$('s').value || 1}&e=${$('e').value || 1}`;
+      }
+      $('player').src = url;
+      history.replaceState(null, '', `#${type}/${id}`);
+    }
+
+    $('play').addEventListener('click', build);
+    $('id').addEventListener('keydown', (ev) => { if (ev.key === 'Enter') build(); });
+    $('type').addEventListener('change', () => {
+      const tv = $('type').value === 'tv';
+      $('s').style.display = tv ? '' : 'none';
+      $('e').style.display = tv ? '' : 'none';
+    });
+
+    // Restore from URL hash, e.g. /#tv/1396
+    const m = location.hash.match(/^#(movie|tv)\/(\d+)$/);
+    if (m) { $('type').value = m[1]; $('id').value = m[2]; }
+    $('type').dispatchEvent(new Event('change'));
+  </script>
+</body>
+</html>
